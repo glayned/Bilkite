@@ -17,7 +17,7 @@ const seasons = [
   ['spring', '木'], ['summer', '火'], ['late', '土'], ['autumn', '金'], ['winter', '水'],
 ] as const;
 ---
-<Base lang={lang} title={u.brand} description={u.home.lead} path="/">
+<Base lang={lang} title={u.brand} description={u.home.lead} path="/" fallback={!home.translated}>
   <section class="hero">
     <div class="wrap">
       <div>

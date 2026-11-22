@@ -84,7 +84,7 @@ section { padding: clamp(3rem, 7vw, 5.5rem) 0; }
 .langs a[aria-current] { background: var(--jade); color: #fff; }
 .burger { display: none; }
 @media (max-width: 1280px) { .brand small { display: none; } .nav { gap: 1.1rem; } }
-@media (max-width: 1020px) {
+@media (max-width: 1200px) {
   .burger { display: inline-flex; }
   .nav { display: none; position: absolute; left: 0; right: 0; top: 100%; background: var(--paper); border-bottom: 1px solid var(--line); flex-direction: column; gap: 0; padding: .5rem 1.25rem 1rem; box-shadow: 0 18px 30px rgb(24 51 38 / .08); }
   .nav.open { display: flex; }
@@ -101,6 +101,8 @@ section { padding: clamp(3rem, 7vw, 5.5rem) 0; }
   .icon { min-width: 2.25rem; padding: 0 .25rem; }
   .langs a[aria-current] { display: none; }
   .langs a { padding: .35rem .4rem; }
+  .tools a.icon { position: relative; }
+  .tools .count { position: absolute; top: .1rem; right: -.15rem; min-width: 1.05rem; height: 1.05rem; font-size: .62rem; padding: 0 .2rem; }
 }
 
 /* search */
@@ -122,17 +124,17 @@ dialog.search::backdrop { background: rgb(24 51 38 / .45); }
 .hero .actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 2rem; }
 .hero .facts { list-style: none; padding: 0; margin: 2.5rem 0 0; font-size: .88rem; color: var(--muted); display: grid; gap: .35rem; }
 .hero .facts li::before { content: '· '; color: var(--cinnabar); font-weight: 700; }
-.cabinet { background: #c9b78f; background: linear-gradient(160deg, #cdbb93, #b9a577); padding: .7rem; border-radius: 10px; box-shadow: 0 30px 60px -25px rgb(24 51 38 / .45), inset 0 0 0 1px rgb(255 255 255 / .25); display: grid; grid-template-columns: repeat(2, 1fr); gap: .55rem; }
+.cabinet { background: #c9b78f; background: linear-gradient(160deg, #cdbb93, #b9a577); padding: .7rem; border-radius: 10px; box-shadow: 0 30px 60px -25px rgb(24 51 38 / .45), inset 0 0 0 1px rgb(255 255 255 / .25); display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .55rem; }
 .drawer { position: relative; display: grid; grid-template-columns: auto 1fr; gap: .9rem; align-items: center; min-height: 5.6rem; padding: .9rem 1rem; background: var(--card); border-radius: 4px; text-decoration: none; color: var(--ink); box-shadow: inset 0 0 0 1px rgb(36 75 56 / .14), inset 0 -6px 0 rgb(36 75 56 / .05), 0 1px 0 rgb(255 255 255 / .4); transition: transform .18s ease, box-shadow .18s ease; }
 .drawer:hover { transform: translateY(-3px); color: var(--ink); box-shadow: inset 0 0 0 1px rgb(36 75 56 / .25), 0 12px 18px -8px rgb(24 51 38 / .45); }
 .drawer .glyph { width: 2.9rem; height: 2.9rem; display: grid; place-items: center; border: 1px solid var(--celadon-3); background: var(--celadon); color: var(--jade); font: 500 1.5rem/1 var(--han); border-radius: 50%; }
-.drawer strong { display: block; font: 560 1.02rem/1.2 var(--serif); color: var(--jade-deep); }
+.drawer strong { display: block; overflow-wrap: anywhere; font: 560 1.02rem/1.2 var(--serif); color: var(--jade-deep); }
 .drawer span span { display: block; font-size: .76rem; color: var(--muted); margin-top: .2rem; }
 .drawer.all { background: var(--jade); color: #fff; }
 .drawer.all strong { color: #fff; } .drawer.all span span { color: #cfe0d2; }
 .drawer.all .glyph { background: transparent; color: #fff; border-color: rgb(255 255 255 / .4); }
-@media (max-width: 860px) { .hero { background: var(--paper); } .hero .wrap { grid-template-columns: 1fr; } }
-@media (max-width: 480px) { .cabinet { grid-template-columns: 1fr; } .drawer { min-height: 4.4rem; } }
+@media (max-width: 1200px) { .hero { background: var(--paper); } .hero .wrap { grid-template-columns: 1fr; } }
+@media (max-width: 640px) { .cabinet { grid-template-columns: 1fr; } .drawer { min-height: 4.4rem; } }
 
 /* needs index */
 .needs { list-style: none; margin: 0; padding: 0; counter-reset: need; border-top: 1px solid var(--celadon-3); }
@@ -222,7 +224,8 @@ dialog.search::backdrop { background: rgb(24 51 38 / .45); }
 .prose hr { border: 0; border-top: 1px solid var(--line); margin: 2rem 0; }
 .prose blockquote { margin: 1.5rem 0; padding-left: 1.2rem; border-left: 3px solid var(--celadon-3); color: var(--muted); }
 .table-scroll { overflow-x: auto; margin: 1.5rem 0; }
-.prose table { border-collapse: collapse; font-size: .9rem; min-width: 100%; }
+.prose table { border-collapse: collapse; font-size: .9rem; min-width: 100%; overflow-wrap: normal; }
+.prose th, .prose td { min-width: 7.5rem; }
 .prose td, .prose th { border: 1px solid var(--line); padding: .5rem .7rem; vertical-align: top; text-align: left; }
 .prose th { background: var(--celadon); }
 

@@ -11,7 +11,7 @@ const { categories, active } = await catalog(lang);
 const other = active.filter((p) => !p.data.categories?.length);
 const seen = new Set<string>();
 ---
-<Base lang={lang} title={u.catalog.title} description={u.catalog.lead} path="/catalog/">
+<Base lang={lang} title={u.catalog.title} description={u.catalog.lead} path="/catalog/" fallback={active.some((p) => !p.translated)}>
   <Crumbs lang={lang} trail={[[u.catalog.title]]} />
   <div class="wrap head"><h1>{u.catalog.title}</h1><p class="lead">{u.catalog.lead}</p></div>
   <div class="wrap cat">

@@ -9,7 +9,7 @@ const lang = Astro.params.lang as Lang;
 const u = t(lang);
 const { archive } = await catalog(lang);
 ---
-<Base lang={lang} title={u.catalog.archive} description={u.catalog.archiveLead} path="/archive/">
+<Base lang={lang} title={u.catalog.archive} description={u.catalog.archiveLead} path="/archive/" fallback={archive.some((p) => !p.translated)}>
   <Crumbs lang={lang} trail={[[u.catalog.title, '/catalog/'], [u.catalog.archive]]} />
   <div class="wrap head"><h1>{u.catalog.archive}</h1><p class="lead">{u.catalog.archiveLead}</p></div>
   <div class="wrap" style="padding-bottom:4rem"><div class="grid">{archive.map((p) => <ProductCard p={p} lang={lang} />)}</div></div>

@@ -11,7 +11,7 @@ for (const [from, to] of Object.entries(legacy)) {
 
 export default defineConfig({
   site: 'https://bilkite.ucoz.com',
-  trailingSlash: 'always',
+  trailingSlash: 'ignore',
   build: { format: 'directory' },
   redirects,
 });

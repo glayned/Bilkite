@@ -44,8 +44,43 @@ export async function one(kind: Kind, lang: Lang, slug: string) {
 }
 
 const INTERNAL = /href="\/(?=(catalog|product|articles|archive|order|about|faq|contacts|info)\b|")/g;
+/** Repairs what the old site's HTML left behind: glued bold runs, tables stuck to text, links with a sentence for a URL. */
+function tidy(src: string): string {
+  return src
+    .split('\n').map((line) => {
+      // whole articles that arrived as one line: wide gaps were line breaks
+      if (line.length < 600 || line.startsWith('|')) return line;
+      return line
+        .replace(/(\| *-{3} *\|(?: *-{3} *\|)*)/, (m) => m.replace(/\| *$/, '|\n'))
+        .replace(/[ \t]{2,}(\|[^\n]*)/, (m, t: string) => '\n\n' + t.replace(/\| \|(?! *-{3})/g, '|\n|').replace(/\| \|(?= *-{3})/, '|\n|').replace(/\|[ \t]{2,}(?=[^|\s][^|]*$)/, '|\n\n'))
+        .replace(/[ \t]{2,}(?=[-•] )/g, '\n')
+        .replace(/[ \t]{2,}---[ \t]{2,}/g, '\n\n---\n\n')
+        .replace(/([.!?:])[ \t]{2,}(?=\S)/g, '$1\n\n')
+        .replace(/[ \t]{3,}(?=\S)/g, '\n\n');
+    }).join('\n')
+    .replace(/^\*{2,}$/gm, '')
+    .replace(/^(\\\*){3,}$/gm, '---')
+    .replace(/(\p{L})\*{4}(?=\p{Ll})/gu, '$1')
+    .replace(/\*{4}([\s,.;:]*)\*{4}/g, '$1')
+    .replace(/\*{4}/g, '**\n\n**')
+    .replace(/([^\n|])[ \t]*(\|(?:[ \t]*\|)+[ \t]*\n\|[ \t]*-{3})/g, '$1\n\n$2')
+    .replace(/^\|(?:[ \t]*\|)+[ \t]*\n(\|[ \t]*-{3}[^\n]*)\n(\|[^\n]*)/gm, '$2\n$1')
+    .replace(/\[([^\]\n]+)\]\(https?:\/\/[^)\s]*[ \t][^)]*\)/g, '$1')
+    .split(/\n{2,}/).map((block) => {
+      if ((block.match(/\*\*/g)?.length ?? 0) % 2) block = block.endsWith('**') ? block.slice(0, -2) : block.replace('**', '');
+      let open = false;
+      return block.replace(/\*\*(?!\*)/g, (m, i: number) => {
+        open = !open;
+        const before = block[i - 1] ?? ' ', after = block[i + 2] ?? ' ';
+        if (!open && /[^\s\p{L}\p{N}]/u.test(before) && /[\p{L}\p{N}\[]/u.test(after)) return '** ';
+        if (open && /[\p{L}\p{N}]/u.test(before) && /[^\s\p{L}\p{N}]/u.test(after)) return ' **';
+        return m;
+      });
+    }).join('\n\n');
+}
+
 export function md(src: string, lang: Lang): string {
-  const prepared = src.replace(/^[ \t]*[–•·▪] ?/gm, '- ').replace(/^(\d+)\)\s/gm, '$1. ');
+  const prepared = tidy(src).replace(/^[ \t]*[–•·▪] ?/gm, '- ').replace(/^(\d+)\)\s/gm, '$1. ');
   let out = marked.parse(prepared, { breaks: true, gfm: true }) as string;
   out = out.replace(INTERNAL, `href="/${lang}/`).replace(/<img /g, '<img loading="lazy" decoding="async" ');
   out = out.replace(/<table>/g, '<div class="table-scroll"><table>').replace(/<\/table>/g, '</table></div>');

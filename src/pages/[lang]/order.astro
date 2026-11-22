@@ -61,19 +61,20 @@ const strings = { qty: o.qty, remove: o.remove, required: o.required, copied: o.
     if (qs.get('ask') && map[qs.get('ask')]) form.product.value = map[qs.get('ask')].t;
     const fmt = (n) => (Number.isInteger(n) ? n : n.toFixed(2).replace('.', ',')) + ' €';
     function paint() {
-      const list = L.read().filter((i) => map[i.slug]);
+      const list = L.read().filter((i) => map[i.slug]), focused = document.activeElement?.dataset?.cart;
       cart.innerHTML = ''; let sum = 0, priced = true;
       for (const it of list) {
-        const m = map[it.slug], li = document.createElement('li');
+        const m = map[it.slug], n = Math.min(99, Math.max(1, Math.round(+it.qty) || 1)), li = document.createElement('li');
         const name = document.createElement('span'); name.textContent = m.t;
         const pr = document.createElement('span'); pr.className = 'price'; pr.style.fontSize = '1rem'; pr.textContent = m.p ? fmt(m.p) : '';
-        const q = document.createElement('input'); q.type = 'number'; q.min = 1; q.max = 99; q.value = it.qty; q.setAttribute('aria-label', strings.qty + ': ' + m.t);
-        q.addEventListener('change', () => { const l = L.read(), x = l.find((i) => i.slug === it.slug); x.qty = Math.max(1, +q.value || 1); L.write(l); });
-        const rm = document.createElement('button'); rm.type = 'button'; rm.textContent = '×'; rm.setAttribute('aria-label', strings.remove + ': ' + m.t);
+        const q = document.createElement('input'); q.type = 'number'; q.min = 1; q.max = 99; q.step = 1; q.inputMode = 'numeric'; q.value = n; q.dataset.cart = 'q-' + it.slug; q.setAttribute('aria-label', strings.qty + ': ' + m.t);
+        q.addEventListener('change', () => { const l = L.read(), x = l.find((i) => i.slug === it.slug); x.qty = Math.min(99, Math.max(1, Math.round(+q.value) || 1)); L.write(l); });
+        const rm = document.createElement('button'); rm.type = 'button'; rm.dataset.cart = 'r-' + it.slug; rm.textContent = '×'; rm.setAttribute('aria-label', strings.remove + ': ' + m.t);
         rm.addEventListener('click', () => L.write(L.read().filter((i) => i.slug !== it.slug)));
         li.append(name, pr, q, rm); cart.append(li);
-        if (m.p) sum += m.p * it.qty; else priced = false;
+        if (m.p) sum += m.p * n; else priced = false;
       }
+      if (focused) [...cart.querySelectorAll('[data-cart]')].find((el) => el.dataset.cart === focused)?.focus();
       document.getElementById('empty').hidden = list.length > 0;
       const tot = document.getElementById('total'); tot.hidden = !(list.length && priced); tot.textContent = strings.total + ': ' + fmt(sum);
       document.querySelectorAll('[data-mode]').forEach((b) => b.setAttribute('aria-selected', b.dataset.mode === mode));
@@ -81,7 +82,7 @@ const strings = { qty: o.qty, remove: o.remove, required: o.required, copied: o.
     }
     function text() {
       const f = form, lines = [];
-      if (mode === 'order') for (const it of L.read()) if (map[it.slug]) lines.push(`${map[it.slug].t} × ${it.qty}`);
+      if (mode === 'order') for (const it of L.read()) if (map[it.slug]) lines.push(`${map[it.slug].t} × ${Math.min(99, Math.max(1, Math.round(+it.qty) || 1))}`);
       if (f.product.value.trim()) lines.push(`${strings.labels.product}: ${f.product.value.trim()}`);
       if (lines.length) lines.push('');
       for (const k of ['name', 'phone', 'email', 'address', 'message']) { if (k === 'address' && mode !== 'order') continue; const v = f[k].value.trim(); if (v) lines.push(`${strings.labels[k]}: ${v}`); }

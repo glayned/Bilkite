@@ -10,7 +10,7 @@ const list = await articles(lang);
 const guides = (await load('pages', lang)).filter((x) => !['nachalo', 'porachka', 'za-nas'].includes(x.slug));
 const chips = [['', u.articles.all], ...(['spring', 'summer', 'autumn', 'winter'] as const).map((s) => [s, u.seasons[s].name]), ['program', u.articles.programs]];
 ---
-<Base lang={lang} title={u.articles.title} description={u.articles.lead} path="/articles/">
+<Base lang={lang} title={u.articles.title} description={u.articles.lead} path="/articles/" fallback={list.some((a) => !a.translated)}>
   <Crumbs lang={lang} trail={[[u.articles.title]]} />
   <div class="wrap head"><h1>{u.articles.title}</h1><p class="lead">{u.articles.lead}</p></div>
   <div class="wrap" style="padding-bottom:4rem">

@@ -137,8 +137,15 @@ const site = Astro.site!.origin;
       const b = e.target.closest('[data-add]');
       if (b) { const l = read(), i = l.findIndex((x) => x.slug === b.dataset.add); i < 0 ? l.push({ slug: b.dataset.add, qty: 1 }) : l.splice(i, 1); write(l); }
       const burger = e.target.closest('.burger');
-      if (burger) { const open = document.getElementById('nav').classList.toggle('open'); burger.setAttribute('aria-expanded', open); }
+      const nav = document.getElementById('nav'), toggle = document.querySelector('.burger');
+      if (burger) { const open = nav.classList.toggle('open'); burger.setAttribute('aria-expanded', open); if (open && e.detail === 0) nav.querySelector('a').focus(); }
+      else if (nav.classList.contains('open') && (e.target.closest('a') || !e.target.closest('#nav'))) { nav.classList.remove('open'); toggle.setAttribute('aria-expanded', false); }
     });
+    document.addEventListener('keydown', (e) => {
+      const nav = document.getElementById('nav');
+      if (e.key === 'Escape' && nav.classList.contains('open')) { nav.classList.remove('open'); const b = document.querySelector('.burger'); b.setAttribute('aria-expanded', false); b.focus(); }
+    });
+    document.querySelectorAll('.langs a').forEach((a) => { a.href += location.search + location.hash; });
     paint();
 
     const dlg = document.querySelector('dialog.search'), input = dlg.querySelector('input'), ul = dlg.querySelector('ul'), empty = dlg.querySelector('.empty');
