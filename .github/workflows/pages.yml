@@ -25,7 +25,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
-      - run: node tools/prefix-base.mjs "/${{ github.event.repository.name }}"
+      - run: node tools/prefix-base.mjs "/${{ github.event.repository.name }}" "https://${{ github.repository_owner }}.github.io"
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
