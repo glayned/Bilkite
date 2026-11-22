@@ -3,7 +3,7 @@ title: "Програма на китайската традиционна мед
 source: "publ"
 legacyId: 26
 date: "2026-11-22"
-image: "/media/perlen-prah-huan-he.webp"
+image: "/media/perlen-prah-huan-he-2.webp"
 legacyUrls: ["/publ/programa_na_kitajskata_tradicionna_medicina_pri_osteoporoza/1-1-0-26"]
 ---
 

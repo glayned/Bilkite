@@ -3,7 +3,7 @@ title: "Храни намаляващи сухотата в белия дроб 
 source: "publ"
 legacyId: 97
 date: "2026-11-22"
-image: "/media/autumn-bilki.webp"
+image: "/media/autumn-bilki-2.webp"
 legacyUrls: ["/publ/khrani_namaljavashhi_sukhotata_v_belija_drob_prez_esenta/1-1-0-97"]
 ---
 
