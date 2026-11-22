@@ -1,0 +1,21 @@
+---
+import { price, type Lang } from '../lib/site';
+import { t } from '../i18n/ui';
+const { p, lang, glyph = '草' } = Astro.props as { p: any; lang: Lang; glyph?: string };
+const u = t(lang);
+const off = p.data.status !== 'active';
+---
+<a class:list={['card', { off }]} href={`/${lang}/product/${p.slug}/`}>
+  {off ? <span class="badge off">{u.product.unavailable}</span> : p.data.oldPrice && <span class="badge">{u.product.promo}</span>}
+  <div class="pic">
+    {p.data.image ? <img src={p.data.image} alt={p.data.title} loading="lazy" decoding="async" /> : <span class="glyph" aria-hidden="true">{glyph}</span>}
+  </div>
+  <div class="body">
+    <h3>{p.data.title}</h3>
+    <p>{p.summary}</p>
+    <div class="foot">
+      {!off && p.data.price ? <span class="price">{p.data.oldPrice && <s>{price(p.data.oldPrice)}</s>}{price(p.data.price)}</span> : <span></span>}
+      <span class="go">{u.product.details} →</span>
+    </div>
+  </div>
+</a>

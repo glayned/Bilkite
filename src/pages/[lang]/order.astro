@@ -1,0 +1,99 @@
+---
+import Base from '../../layouts/Base.astro';
+import Crumbs from '../../components/Crumbs.astro';
+import { langPaths, CONTACT, catalog, one, md, type Lang } from '../../lib/site';
+import { t } from '../../i18n/ui';
+export const getStaticPaths = langPaths;
+const lang = Astro.params.lang as Lang;
+const u = t(lang);
+const o = u.order;
+const { products } = await catalog(lang);
+const map = Object.fromEntries(products.map((p) => [p.slug, { t: p.data.title, p: p.data.status === 'active' ? p.data.price ?? null : null }]));
+const entry = await one('pages', lang, 'porachka');
+const i = entry.body.search(/^### /m);
+const terms = i < 0 ? entry.body : entry.body.slice(0, i);
+const strings = { qty: o.qty, remove: o.remove, required: o.required, copied: o.copied, subjectOrder: o.subjectOrder, subjectAsk: o.subjectAsk, total: o.total,
+  labels: { product: o.product, name: o.name, phone: o.phone, email: o.email, address: o.address, message: o.message } };
+---
+<Base lang={lang} title={o.title} description={o.lead} path="/order/" fallback={!entry.translated} ask={false}>
+  <Crumbs lang={lang} trail={[[o.title]]} />
+  <div class="wrap head"><h1>{o.title}</h1><p class="lead">{o.lead}</p></div>
+  <div class="wrap order">
+    <form id="order" novalidate>
+      <div class="tabs" role="tablist">
+        <button type="button" role="tab" data-mode="order" aria-selected="true">{o.tabOrder}</button>
+        <button type="button" role="tab" data-mode="ask" aria-selected="false">{o.tabAsk}</button>
+      </div>
+      <div data-only="order">
+        <h2 style="font-size:1.3rem">{o.yourList}</h2>
+        <ul class="cart" id="cart"></ul>
+        <p class="fine" id="empty">{o.empty} <a href={`/${lang}/catalog/`}>{o.browse} →</a></p>
+        <p class="fine" id="total" hidden></p>
+      </div>
+      <div class="field"><label for="f-product">{o.product}</label><input id="f-product" name="product" placeholder={o.productHint} /></div>
+      <div class="two">
+        <div class="field"><label for="f-name">{o.name} *</label><input id="f-name" name="name" autocomplete="name" required /></div>
+        <div class="field"><label for="f-phone">{o.phone} *</label><input id="f-phone" name="phone" type="tel" autocomplete="tel" required /></div>
+      </div>
+      <div class="field"><label for="f-email">{o.email}</label><input id="f-email" name="email" type="email" autocomplete="email" /></div>
+      <div class="field" data-only="order"><label for="f-address">{o.address}</label><input id="f-address" name="address" autocomplete="street-address" /></div>
+      <div class="field"><label for="f-message">{o.message}</label><textarea id="f-message" name="message" placeholder={o.messageHint}></textarea></div>
+      <div class="form-actions">
+        <button class="btn" type="submit">{o.send}</button>
+        <button class="btn ghost" type="button" id="copy">{o.copy}</button>
+      </div>
+      <p class="status" role="status" id="status"></p>
+      <p class="fine">{o.honest}</p>
+    </form>
+    <div>
+      <div class="panel">
+        <p class="eyebrow">{o.call}</p>
+        <a class="big" href={`tel:${CONTACT.tel}`}>{CONTACT.phone}</a>
+        <a href={`mailto:${CONTACT.email}`}>{CONTACT.email}</a>
+      </div>
+      <div class="panel"><h2>{o.terms}</h2><div class="prose" set:html={md(terms, lang)} /><p style="margin:1rem 0 0"><a class="more" href={`/${lang}/faq/`}>{u.faq.title}</a></p></div>
+    </div>
+  </div>
+  <script is:inline define:vars={{ map, strings, email: CONTACT.email }}>
+    const L = { read: () => window.bilkiteList.read(), write: (l) => window.bilkiteList.write(l) }, form = document.getElementById('order'), cart = document.getElementById('cart'), status = document.getElementById('status');
+    const qs = new URLSearchParams(location.search);
+    let mode = qs.has('ask') ? 'ask' : 'order';
+    if (qs.get('ask') && map[qs.get('ask')]) form.product.value = map[qs.get('ask')].t;
+    const fmt = (n) => (Number.isInteger(n) ? n : n.toFixed(2).replace('.', ',')) + ' €';
+    function paint() {
+      const list = L.read().filter((i) => map[i.slug]), focused = document.activeElement?.dataset?.cart;
+      cart.innerHTML = ''; let sum = 0, priced = true;
+      for (const it of list) {
+        const m = map[it.slug], n = Math.min(99, Math.max(1, Math.round(+it.qty) || 1)), li = document.createElement('li');
+        const name = document.createElement('span'); name.textContent = m.t;
+        const pr = document.createElement('span'); pr.className = 'price'; pr.style.fontSize = '1rem'; pr.textContent = m.p ? fmt(m.p) : '';
+        const q = document.createElement('input'); q.type = 'number'; q.min = 1; q.max = 99; q.step = 1; q.inputMode = 'numeric'; q.value = n; q.dataset.cart = 'q-' + it.slug; q.setAttribute('aria-label', strings.qty + ': ' + m.t);
+        q.addEventListener('change', () => { const l = L.read(), x = l.find((i) => i.slug === it.slug); x.qty = Math.min(99, Math.max(1, Math.round(+q.value) || 1)); L.write(l); });
+        const rm = document.createElement('button'); rm.type = 'button'; rm.dataset.cart = 'r-' + it.slug; rm.textContent = '×'; rm.setAttribute('aria-label', strings.remove + ': ' + m.t);
+        rm.addEventListener('click', () => L.write(L.read().filter((i) => i.slug !== it.slug)));
+        li.append(name, pr, q, rm); cart.append(li);
+        if (m.p) sum += m.p * n; else priced = false;
+      }
+      if (focused) [...cart.querySelectorAll('[data-cart]')].find((el) => el.dataset.cart === focused)?.focus();
+      document.getElementById('empty').hidden = list.length > 0;
+      const tot = document.getElementById('total'); tot.hidden = !(list.length && priced); tot.textContent = strings.total + ': ' + fmt(sum);
+      document.querySelectorAll('[data-mode]').forEach((b) => b.setAttribute('aria-selected', b.dataset.mode === mode));
+      document.querySelectorAll('[data-only]').forEach((el) => { el.hidden = el.dataset.only !== mode; });
+    }
+    function text() {
+      const f = form, lines = [];
+      if (mode === 'order') for (const it of L.read()) if (map[it.slug]) lines.push(`${map[it.slug].t} × ${Math.min(99, Math.max(1, Math.round(+it.qty) || 1))}`);
+      if (f.product.value.trim()) lines.push(`${strings.labels.product}: ${f.product.value.trim()}`);
+      if (lines.length) lines.push('');
+      for (const k of ['name', 'phone', 'email', 'address', 'message']) { if (k === 'address' && mode !== 'order') continue; const v = f[k].value.trim(); if (v) lines.push(`${strings.labels[k]}: ${v}`); }
+      return lines.join('\n');
+    }
+    const valid = () => { const ok = form.name.value.trim() && form.phone.value.trim(); status.textContent = ok ? '' : strings.required; return ok; };
+    document.querySelectorAll('[data-mode]').forEach((b) => b.addEventListener('click', () => { mode = b.dataset.mode; paint(); }));
+    document.addEventListener('list:change', paint);
+    form.addEventListener('submit', (e) => { e.preventDefault(); if (!valid()) return;
+      location.href = `mailto:${email}?subject=${encodeURIComponent(mode === 'order' ? strings.subjectOrder : strings.subjectAsk)}&body=${encodeURIComponent(text())}`; });
+    document.getElementById('copy').addEventListener('click', async () => { if (!valid()) return; await navigator.clipboard.writeText(text()); status.textContent = strings.copied; });
+    document.addEventListener('DOMContentLoaded', paint);
+  </script>
+</Base>

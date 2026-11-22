@@ -1,0 +1,36 @@
+---
+import Base from '../../../layouts/Base.astro';
+import Crumbs from '../../../components/Crumbs.astro';
+import ProductCard from '../../../components/ProductCard.astro';
+import { LANGS, CATEGORY_ORDER, catalog, md, excerpt, type Lang } from '../../../lib/site';
+import { t } from '../../../i18n/ui';
+export const getStaticPaths = () => LANGS.flatMap((lang) => CATEGORY_ORDER.map(({ slug }) => ({ params: { lang, slug } })));
+const { lang, slug } = Astro.params as { lang: Lang; slug: string };
+const u = t(lang);
+const { categories } = await catalog(lang);
+const c = categories.find((x) => x.slug === slug)!;
+const blocks = c.parts.body.split(/\n{2,}/);
+// intro = text before the first sub-heading; the rest goes below the products
+const cut = blocks.findIndex((b, i) => i > 0 && /^#{2,3} /.test(b));
+const intro = (cut < 0 ? blocks : blocks.slice(0, cut)).join('\n\n');
+const rest = cut < 0 ? '' : blocks.slice(cut).join('\n\n');
+---
+<Base lang={lang} title={c.data.title} description={excerpt(c.body, 160)} path={`/catalog/${slug}/`} fallback={!c.translated} image={c.data.image}>
+  <Crumbs lang={lang} trail={[[u.catalog.title, '/catalog/'], [c.data.title]]} />
+  <div class="wrap head"><p class="eyebrow">{u.product.category} · <span class="han" aria-hidden="true">{c.glyph}</span></p><h1>{c.data.title}</h1></div>
+  <div class="wrap cat">
+    <aside class="side">
+      <h2>{u.catalog.sections}</h2>
+      <ul>
+        {categories.map((x) => <li><a href={`/${lang}/catalog/${x.slug}/`} aria-current={x.slug === slug ? 'page' : undefined}>{x.data.title}<small>{x.items.length || ''}</small></a></li>)}
+      </ul>
+      <a href={`/${lang}/catalog/`}>{u.home.all} →</a>
+    </aside>
+    <div>
+      <div class="prose" style="margin-bottom:2.5rem" set:html={md(intro, lang)} />
+      {c.items.length > 0 && <div class="grid" style="margin-bottom:3rem">{c.items.map((p) => <ProductCard p={p} lang={lang} glyph={c.glyph} />)}</div>}
+      {rest && <div class="prose" set:html={md(rest, lang)} />}
+      <p class="fine" style="margin-top:2rem">{u.product.notMedicine}</p>
+    </div>
+  </div>
+</Base>

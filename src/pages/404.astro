@@ -1,0 +1,9 @@
+---
+import Base from '../layouts/Base.astro';
+import { t } from '../i18n/ui';
+const u = t('bg');
+---
+<Base lang="bg" title={u.notFound.title} path="/" ask={false}>
+  <div class="wrap head" style="padding:5rem 0"><h1>{u.notFound.title}</h1><p class="lead">{u.notFound.text}</p>
+  <p><a class="btn" href="/bg/catalog/">{u.home.cta}</a></p></div>
+</Base>

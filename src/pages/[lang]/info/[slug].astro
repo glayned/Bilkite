@@ -1,0 +1,12 @@
+---
+import TextPage from '../../../components/TextPage.astro';
+import { LANGS, load, one, type Lang } from '../../../lib/site';
+import { t } from '../../../i18n/ui';
+export async function getStaticPaths() {
+  const list = (await load('pages', 'bg')).filter((x) => !['nachalo', 'porachka', 'za-nas'].includes(x.slug));
+  return LANGS.flatMap((lang) => list.map((p) => ({ params: { lang, slug: p.slug } })));
+}
+const { lang, slug } = Astro.params as { lang: Lang; slug: string };
+const entry = await one('pages', lang, slug);
+---
+<TextPage lang={lang} entry={entry} path={`/info/${slug}/`} trail={[[t(lang).articles.title, '/articles/'], [entry.data.title]]} />
