@@ -63,7 +63,7 @@ export function excerpt(body: string, max = 170): string {
 }
 
 const BLURB = /^[\s"„“”«»*_-]{0,4}\[([^\]]+)\]\(\/product\/([a-z0-9-]+)\/\)[\s"„“”«»*_.,:–-]{0,4}/;
-const PRICE_TAIL = /\s*(хранителна добавка\s*[-–]\s*)?(промоция\s*!?\s*|акция\s*!?\s*|promo(tion)?\s*!?\s*)?(цена|price)\b[\s\S]*$/i;
+const PRICE_TAIL = /\s*(хранителна добавка\s*[-–]\s*)?(промоция\s*!?\s*|акция\s*!?\s*|promo(tion)?\s*!?\s*)?(цена|price)(?=[\s:–-]|$)[\s\S]*$/i;
 /** A category text describes each product in its own paragraph; lift those into card blurbs. */
 export function splitCategory(body: string) {
   const blurbs: Record<string, string> = {};

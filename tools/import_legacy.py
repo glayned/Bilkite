@@ -179,7 +179,7 @@ def media(src):
     if local in media_done: return media_done[local]
     name = translit(os.path.splitext(os.path.basename(p))[0]) or hashlib.md5(p.encode()).hexdigest()[:8]
     out = f'{name}.webp'; i = 2
-    while out in media_done.values(): out = f'{name}-{i}.webp'; i += 1
+    while '/media/' + out in media_done.values(): out = f'{name}-{i}.webp'; i += 1
     try:
         im = Image.open(local); im.load()
         if im.mode not in ('RGB', 'RGBA'): im = im.convert('RGBA' if 'A' in im.mode or im.mode == 'P' else 'RGB')
