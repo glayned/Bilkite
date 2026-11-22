@@ -1,0 +1,103 @@
+---
+import Base from '../../layouts/Base.astro';
+import { langPaths, catalog, articles, one, md, splitHome, type Lang } from '../../lib/site';
+import { t } from '../../i18n/ui';
+export const getStaticPaths = langPaths;
+const lang = Astro.params.lang as Lang;
+const u = t(lang);
+const p = (s: string) => `/${lang}${s}`;
+const { categories, active } = await catalog(lang);
+const home = await one('pages', lang, 'nachalo');
+
+const { needs, about } = splitHome(home.body);
+
+const all = await articles(lang);
+const fresh = all.filter((a) => a.data.source === 'land' || a.data.source === 'blog').slice(0, 4);
+const seasons = [
+  ['spring', '木'], ['summer', '火'], ['late', '土'], ['autumn', '金'], ['winter', '水'],
+] as const;
+---
+<Base lang={lang} title={u.brand} description={u.home.lead} path="/">
+  <section class="hero">
+    <div class="wrap">
+      <div>
+        <p class="eyebrow">{u.home.eyebrow}</p>
+        <h1>{u.home.h1}</h1>
+        <p class="lead">{u.home.lead}</p>
+        <div class="actions">
+          <a class="btn" href={p('/catalog/')}>{u.home.cta}</a>
+          <a class="btn ghost" href="#needs">{u.home.cta2}</a>
+        </div>
+        <ul class="facts">
+          <li>{u.facts.delivery}</li><li>{u.facts.pay}</li><li>{u.facts.ask}</li>
+        </ul>
+      </div>
+      <nav class="cabinet" aria-label={u.home.cabinet}>
+        {categories.map((c) => (
+          <a class="drawer" href={p(`/catalog/${c.slug}/`)}>
+            <span class="glyph" aria-hidden="true">{c.glyph}</span>
+            <span><strong>{c.data.title}</strong>{c.items.length > 0 && <span>{u.catalog.count(c.items.length)}</span>}</span>
+          </a>
+        ))}
+        <a class="drawer all" href={p('/catalog/')}>
+          <span class="glyph" aria-hidden="true">全</span>
+          <span><strong>{u.home.all}</strong><span>{u.catalog.count(active.length)}</span></span>
+        </a>
+      </nav>
+    </div>
+  </section>
+
+  <section class="tint" id="needs">
+    <div class="wrap">
+      <div class="rule"><h2>{u.home.needsTitle}</h2></div>
+      <p class="lead" style="margin-bottom:2rem">{u.home.needsLead}</p>
+      <ol class="needs">
+        {needs.map((n) => <li><a href={p(n.href)}><strong>{n.title}</strong><span>{n.text}</span></a></li>)}
+      </ol>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <div class="rule"><h2>{u.home.seasonTitle}</h2><a class="more" href={p('/articles/')}>{u.home.allArticles}</a></div>
+      <p class="lead" style="margin-bottom:2rem">{u.home.seasonLead}</p>
+      <div class="seasons">
+        {seasons.map(([key, glyph]) => (
+          <a class="season" data-season={key} href={p(`/articles/?season=${key === 'late' ? 'summer' : key}`)}>
+            <span class="badge">{u.home.now}</span>
+            <i aria-hidden="true">{glyph}</i>
+            <em>{u.seasons[key].el}</em>
+            <strong>{u.seasons[key].name}</strong>
+            <p>{u.seasons[key].organ}</p>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="tint">
+    <div class="wrap">
+      <div class="rule"><h2>{u.home.howTitle}</h2><a class="more" href={p('/order/')}>{u.nav.order}</a></div>
+      <ol class="steps">{u.steps.map(([a, b]) => <li><strong>{a}</strong><span>{b}</span></li>)}</ol>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap article" style="padding-bottom:0">
+      <div>
+        <div class="rule"><h2>{u.home.aboutTitle}</h2></div>
+        <div class="prose" set:html={md(about, lang)} />
+        <p><a class="more" href={p('/about/')}>{u.home.moreAbout}</a></p>
+      </div>
+      <aside>
+        <h2>{u.home.freshTitle}</h2>
+        <ul>{fresh.map((a) => <li><a href={p(`/articles/${a.slug}/`)}>{a.data.title}</a></li>)}</ul>
+        <a class="more" href={p('/articles/')}>{u.home.allArticles}</a>
+      </aside>
+    </div>
+  </section>
+  <script is:inline>
+    (() => { const m = new Date().getMonth() + 1; const s = m >= 3 && m <= 5 ? 'spring' : m <= 7 && m >= 6 ? 'summer' : m === 8 ? 'late' : m >= 9 && m <= 11 ? 'autumn' : 'winter';
+      document.querySelector(`[data-season="${s}"]`)?.classList.add('now'); })();
+  </script>
+</Base>

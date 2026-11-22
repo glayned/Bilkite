@@ -1,0 +1,13 @@
+---
+import TextPage from '../../components/TextPage.astro';
+import { langPaths, one, splitHome, type Lang } from '../../lib/site';
+import { t } from '../../i18n/ui';
+export const getStaticPaths = langPaths;
+const lang = Astro.params.lang as Lang;
+const u = t(lang);
+const entry = await one('pages', lang, 'porachka');
+// the old order page carries the delivery FAQ after its first sub-heading
+const i = entry.body.search(/^### /m);
+const body = (i < 0 ? entry.body : entry.body.slice(i).replace(/^### [^\n]*\n/, '')) + '\n\n---\n\n' + splitHome((await one('pages', lang, 'nachalo')).body).qa;
+---
+<TextPage lang={lang} entry={entry} path="/faq/" title={u.faq.title} lead={u.faq.lead} body={body} />

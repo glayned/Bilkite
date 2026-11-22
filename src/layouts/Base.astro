@@ -1,0 +1,164 @@
+---
+import '../styles/global.css';
+import { LANGS, CONTACT, catalog, load, type Lang } from '../lib/site';
+import { t } from '../i18n/ui';
+interface Props { lang: Lang; title: string; description?: string; path: string; fallback?: boolean; image?: string; ask?: boolean }
+const { lang, title, description, path, fallback = false, image, ask = true } = Astro.props;
+const u = t(lang);
+const p = (s: string) => `/${lang}${s}`;
+const { categories } = await catalog(lang);
+const infoPages = (await load('pages', lang)).filter((x) => !['nachalo', 'porachka', 'za-nas'].includes(x.slug));
+const nav = [
+  ['/catalog/', u.nav.catalog], ['/#needs', u.nav.needs], ['/articles/', u.nav.articles],
+  ['/about/', u.nav.about], ['/faq/', u.nav.faq], ['/order/', u.nav.order],
+];
+const full = title === u.brand ? `${u.brand} – ${u.tagline}` : `${title} – ${u.brand}`;
+const site = Astro.site!.origin;
+---
+<!doctype html>
+<html lang={lang}>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{full}</title>
+  {description && <meta name="description" content={description} />}
+  <link rel="canonical" href={site + p(path)} />
+  {LANGS.map((l) => <link rel="alternate" hreflang={l} href={`${site}/${l}${path}`} />)}
+  <meta property="og:title" content={full} />
+  {description && <meta property="og:description" content={description} />}
+  {image && <meta property="og:image" content={site + image} />}
+  <meta name="theme-color" content="#244b38" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+</head>
+<body data-lang={lang}>
+  <a class="skip" href="#main">{u.skip}</a>
+  <header class="top">
+    <div class="wrap">
+      <a class="brand" href={p('/')}>
+        <span class="seal" aria-hidden="true">草</span>
+        <span><b>{u.brand}</b><small>{u.tagline}</small></span>
+      </a>
+      <nav class="nav" id="nav" aria-label={u.menu}>
+        {nav.map(([href, label]) => <a href={p(href)} aria-current={path !== '/' && href.startsWith(path.split('/').slice(0, 2).join('/') + '/') ? 'page' : undefined}>{label}</a>)}
+      </nav>
+      <div class="tools">
+        <button class="icon" type="button" data-search aria-label={u.search}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        </button>
+        <a class="icon" href={p('/order/')} aria-label={u.list}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 3h9l4 4v14H6z"/><path d="M9 12h7M9 16h7M9 8h3"/></svg>
+          <span class="lbl">{u.list}</span><span class="count" data-count></span>
+        </a>
+        <div class="langs">
+          {LANGS.map((l) => <a href={`/${l}${path}`} hreflang={l} aria-current={l === lang ? 'true' : undefined} title={t(l).langName}>{l}</a>)}
+        </div>
+        <button class="icon burger" type="button" aria-controls="nav" aria-expanded="false" aria-label={u.menu}>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    {fallback && <div class="wrap"><p class="note" style="margin-top:1.25rem">{u.fallback}</p></div>}
+    <slot />
+  </main>
+
+  {ask && (
+    <section class="ask">
+      <div class="wrap">
+        <div><h2>{u.home.askTitle}</h2><p>{u.home.askText}</p></div>
+        <a class="btn" href={p('/order/?ask')}>{u.home.askCta}</a>
+      </div>
+    </section>
+  )}
+
+  <footer class="foot-site">
+    <div class="wrap">
+      <div class="cols">
+        <div>
+          <a class="brand" href={p('/')}><span class="seal" aria-hidden="true">草</span><span><b>{u.brand}</b><small>{u.tagline}</small></span></a>
+          <p>{u.contacts.whereText}</p>
+        </div>
+        <div>
+          <h2>{u.footer.catalog}</h2>
+          <ul>
+            {categories.map((c) => <li><a href={p(`/catalog/${c.slug}/`)}>{c.data.title}</a></li>)}
+            <li><a href={p('/archive/')}>{u.catalog.archive}</a></li>
+          </ul>
+        </div>
+        <div>
+          <h2>{u.footer.info}</h2>
+          <ul>
+            <li><a href={p('/about/')}>{u.nav.about}</a></li>
+            <li><a href={p('/articles/')}>{u.nav.articles}</a></li>
+            {infoPages.map((x) => <li><a href={p(`/info/${x.slug}/`)}>{x.data.title}</a></li>)}
+            <li><a href={p('/faq/')}>{u.nav.faq}</a></li>
+          </ul>
+        </div>
+        <div>
+          <h2>{u.footer.contact}</h2>
+          <ul>
+            <li><a href={`tel:${CONTACT.tel}`}>{CONTACT.phone}</a></li>
+            <li><a href={`mailto:${CONTACT.email}`}>{CONTACT.email}</a></li>
+            <li><a href={p('/order/')}>{u.nav.order}</a></li>
+            <li><a href={p('/contacts/')}>{u.nav.contacts}</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="legal"><p>{u.footer.note}</p><p>© {new Date().getFullYear()} {u.brand}</p></div>
+    </div>
+  </footer>
+
+  <dialog class="search" aria-label={u.search}>
+    <form method="dialog">
+      <input type="search" placeholder={u.searchPlaceholder} aria-label={u.search} autocomplete="off" />
+      <button class="icon" aria-label={u.close}>✕</button>
+    </form>
+    <ul></ul>
+    <p class="empty" hidden>{u.searchEmpty}</p>
+  </dialog>
+
+  <script is:inline>
+  (() => {
+    const lang = document.body.dataset.lang, KEY = 'bilkite-list';
+    const read = () => { try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch { return []; } };
+    const write = (l) => { localStorage.setItem(KEY, JSON.stringify(l)); paint(); document.dispatchEvent(new Event('list:change')); };
+    window.bilkiteList = { read, write };
+    function paint() {
+      const l = read();
+      document.querySelectorAll('[data-count]').forEach((c) => { c.textContent = l.length || ''; });
+      document.querySelectorAll('[data-add]').forEach((b) => {
+        const on = l.some((i) => i.slug === b.dataset.add);
+        b.setAttribute('aria-pressed', on); b.textContent = on ? b.dataset.on : b.dataset.off;
+      });
+    }
+    document.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-add]');
+      if (b) { const l = read(), i = l.findIndex((x) => x.slug === b.dataset.add); i < 0 ? l.push({ slug: b.dataset.add, qty: 1 }) : l.splice(i, 1); write(l); }
+      const burger = e.target.closest('.burger');
+      if (burger) { const open = document.getElementById('nav').classList.toggle('open'); burger.setAttribute('aria-expanded', open); }
+    });
+    paint();
+
+    const dlg = document.querySelector('dialog.search'), input = dlg.querySelector('input'), ul = dlg.querySelector('ul'), empty = dlg.querySelector('.empty');
+    let index;
+    const norm = (s) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    async function run() {
+      index ??= await fetch(`/${lang}/search.json`).then((r) => r.json());
+      const q = norm(input.value.trim()); ul.innerHTML = '';
+      if (q.length < 2) { empty.hidden = true; return; }
+      const words = q.split(/\s+/);
+      const hits = index.map((d) => { const a = norm(d.t), b = norm(d.x); let s = 0; for (const w of words) { if (a.includes(w)) s += 3; else if (b.includes(w)) s += 1; else return null; } return [s + (d.k === 0 ? 1 : 0), d]; })
+        .filter(Boolean).sort((a, b) => b[0] - a[0]).slice(0, 12);
+      empty.hidden = hits.length > 0;
+      for (const [, d] of hits) { const li = document.createElement('li'), a = document.createElement('a'), sm = document.createElement('small'); a.href = d.u; sm.textContent = d.g; a.append(sm, d.t); li.append(a); ul.append(li); }
+    }
+    document.querySelectorAll('[data-search]').forEach((b) => b.addEventListener('click', () => { dlg.showModal(); input.focus(); }));
+    input.addEventListener('input', run);
+    dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });
+    document.addEventListener('keydown', (e) => { if (e.key === '/' && !/input|textarea|select/i.test(document.activeElement.tagName)) { e.preventDefault(); dlg.showModal(); input.focus(); } });
+  })();
+  </script>
+</body>
+</html>

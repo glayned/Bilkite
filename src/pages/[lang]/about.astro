@@ -1,0 +1,8 @@
+---
+import TextPage from '../../components/TextPage.astro';
+import { langPaths, one, type Lang } from '../../lib/site';
+export const getStaticPaths = langPaths;
+const lang = Astro.params.lang as Lang;
+const entry = await one('pages', lang, 'za-nas');
+---
+<TextPage lang={lang} entry={entry} path="/about/" />

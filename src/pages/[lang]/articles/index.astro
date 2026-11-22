@@ -1,0 +1,45 @@
+---
+import Base from '../../../layouts/Base.astro';
+import Crumbs from '../../../components/Crumbs.astro';
+import { langPaths, articles, load, type Lang } from '../../../lib/site';
+import { t } from '../../../i18n/ui';
+export const getStaticPaths = langPaths;
+const lang = Astro.params.lang as Lang;
+const u = t(lang);
+const list = await articles(lang);
+const guides = (await load('pages', lang)).filter((x) => !['nachalo', 'porachka', 'za-nas'].includes(x.slug));
+const chips = [['', u.articles.all], ...(['spring', 'summer', 'autumn', 'winter'] as const).map((s) => [s, u.seasons[s].name]), ['program', u.articles.programs]];
+---
+<Base lang={lang} title={u.articles.title} description={u.articles.lead} path="/articles/">
+  <Crumbs lang={lang} trail={[[u.articles.title]]} />
+  <div class="wrap head"><h1>{u.articles.title}</h1><p class="lead">{u.articles.lead}</p></div>
+  <div class="wrap" style="padding-bottom:4rem">
+    <ul class="guides">{guides.map((g) => <li><a href={`/${lang}/info/${g.slug}/`}>{g.data.title}</a></li>)}</ul>
+    <div class="filters">
+      {chips.map(([k, label]) => <button class="chip" type="button" data-f={k} aria-pressed={k === '' ? 'true' : 'false'}>{label}</button>)}
+      <input type="search" placeholder={u.articles.filter} aria-label={u.articles.filter} />
+    </div>
+    <ul class="alist">
+      {list.map((a) => (
+        <li data-tags={[...a.seasons, a.program ? 'program' : ''].join(' ')}>
+          <a href={`/${lang}/articles/${a.slug}/`}><strong>{a.data.title}</strong><span>{a.summary}</span></a>
+        </li>
+      ))}
+    </ul>
+    <p class="lead" id="none" hidden>{u.articles.none}</p>
+  </div>
+  <script is:inline>
+    (() => {
+      const items = [...document.querySelectorAll('.alist li')], chips = [...document.querySelectorAll('.chip')], input = document.querySelector('.filters input');
+      let f = new URLSearchParams(location.search).get('season') || '';
+      function apply() {
+        const q = input.value.trim().toLowerCase(); let n = 0;
+        chips.forEach((c) => c.setAttribute('aria-pressed', c.dataset.f === f));
+        items.forEach((li) => { const ok = (!f || li.dataset.tags.split(' ').includes(f)) && (!q || li.textContent.toLowerCase().includes(q)); li.hidden = !ok; n += ok; });
+        document.getElementById('none').hidden = n > 0;
+      }
+      chips.forEach((c) => c.addEventListener('click', () => { f = c.dataset.f; apply(); }));
+      input.addEventListener('input', apply); apply();
+    })();
+  </script>
+</Base>

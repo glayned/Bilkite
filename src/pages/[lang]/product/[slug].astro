@@ -1,0 +1,72 @@
+---
+import Base from '../../../layouts/Base.astro';
+import Crumbs from '../../../components/Crumbs.astro';
+import ProductCard from '../../../components/ProductCard.astro';
+import { LANGS, CONTACT, catalog, load, md, price, type Lang } from '../../../lib/site';
+import { t } from '../../../i18n/ui';
+export async function getStaticPaths() {
+  const list = await load('products', 'bg');
+  return LANGS.flatMap((lang) => list.map((p) => ({ params: { lang, slug: p.slug } })));
+}
+const { lang, slug } = Astro.params as { lang: Lang; slug: string };
+const u = t(lang);
+const { categories, products } = await catalog(lang);
+const p = products.find((x) => x.slug === slug)!;
+const off = p.data.status !== 'active';
+const cats = categories.filter((c) => p.data.categories?.includes(c.slug));
+const related = (cats[0]?.items ?? []).filter((x) => x.slug !== slug).slice(0, 4);
+
+let n = 0;
+const toc: [string, string][] = [];
+const html = md(p.body, lang).replace(/<h2>(.*?)<\/h2>/g, (_, h) => { const id = `s${++n}`; toc.push([id, h.replace(/<[^>]+>/g, '')]); return `<h2 id="${id}" style="scroll-margin-top:6rem">${h}</h2>`; });
+const ld = { '@context': 'https://schema.org', '@type': 'Product', name: p.data.title, description: p.summary, image: p.data.image && Astro.site!.origin + p.data.image,
+  ...(!off && p.data.price ? { offers: { '@type': 'Offer', price: p.data.price, priceCurrency: 'EUR', availability: 'https://schema.org/InStock' } } : {}) };
+---
+<Base lang={lang} title={p.data.title} description={p.summary} path={`/product/${slug}/`} fallback={!p.translated} image={p.data.image}>
+  <Crumbs lang={lang} trail={off ? [[u.catalog.archive, '/archive/'], [p.data.title]] : [[u.catalog.title, '/catalog/'], ...(cats[0] ? [[cats[0].data.title, `/catalog/${cats[0].slug}/`] as [string, string]] : []), [p.data.title]]} />
+  <article>
+    <div class="wrap pdp">
+      <div class="photo">
+        {p.data.image ? <img src={p.data.image} alt={p.data.title} /> : <span class="glyph" aria-hidden="true">{cats[0]?.glyph ?? '草'}</span>}
+      </div>
+      <div>
+        {cats.length > 0 && <p class="cats">{cats.map((c) => <a href={`/${lang}/catalog/${c.slug}/`}>{c.data.title}</a>)}</p>}
+        {off && <p><span class="badge off">{u.product.unavailable}</span></p>}
+        <h1>{p.data.title}</h1>
+        <p class="sum">{p.summary}</p>
+        {off ? (
+          <div class="buy">
+            <p class="note warn" style="background:none;margin:0 0 1.1rem">{u.product.archiveNote}</p>
+            <div class="actions"><a class="btn ghost" href={`/${lang}/order/?ask=${slug}`}>{u.product.ask}</a></div>
+          </div>
+        ) : (
+          <div class="buy">
+            <div class="row">
+              {p.data.price ? <span class="price">{p.data.oldPrice && <s>{price(p.data.oldPrice)}</s>}{price(p.data.price)}</span> : <span></span>}
+              {p.data.oldPrice && <span class="badge">{u.product.promo}</span>}
+            </div>
+            <div class="actions">
+              <button class="btn" type="button" data-add={slug} data-off={u.product.add} data-on={u.product.added} aria-pressed="false">{u.product.add}</button>
+              <a class="btn ghost" href={`/${lang}/order/?ask=${slug}`}>{u.product.ask}</a>
+            </div>
+            <ul><li>{u.facts.delivery}</li><li>{u.facts.pay}</li><li><a href={`tel:${CONTACT.tel}`}>{CONTACT.phone}</a></li></ul>
+          </div>
+        )}
+        <p class="fine">{u.product.notMedicine}</p>
+      </div>
+    </div>
+    <div class="wrap pdp-body">
+      <nav class="toc" aria-label={u.product.contents}>
+        {toc.length > 1 && <><h2>{u.product.contents}</h2><ol>{toc.map(([id, h]) => <li><a href={`#${id}`}>{h}</a></li>)}</ol></>}
+      </nav>
+      <div class="prose" set:html={html} />
+    </div>
+  </article>
+  {related.length > 0 && (
+    <section class="tint"><div class="wrap">
+      <div class="rule"><h2>{u.product.related}</h2><a class="more" href={`/${lang}/catalog/${cats[0].slug}/`}>{cats[0].data.title}</a></div>
+      <div class="grid">{related.map((r) => <ProductCard p={r} lang={lang} glyph={cats[0].glyph} />)}</div>
+    </div></section>
+  )}
+  <script type="application/ld+json" set:html={JSON.stringify(ld)} />
+</Base>

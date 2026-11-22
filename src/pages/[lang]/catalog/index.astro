@@ -1,0 +1,43 @@
+---
+import Base from '../../../layouts/Base.astro';
+import Crumbs from '../../../components/Crumbs.astro';
+import ProductCard from '../../../components/ProductCard.astro';
+import { langPaths, catalog, type Lang } from '../../../lib/site';
+import { t } from '../../../i18n/ui';
+export const getStaticPaths = langPaths;
+const lang = Astro.params.lang as Lang;
+const u = t(lang);
+const { categories, active } = await catalog(lang);
+const other = active.filter((p) => !p.data.categories?.length);
+const seen = new Set<string>();
+---
+<Base lang={lang} title={u.catalog.title} description={u.catalog.lead} path="/catalog/">
+  <Crumbs lang={lang} trail={[[u.catalog.title]]} />
+  <div class="wrap head"><h1>{u.catalog.title}</h1><p class="lead">{u.catalog.lead}</p></div>
+  <div class="wrap cat">
+    <aside class="side">
+      <h2>{u.catalog.sections}</h2>
+      <ul>
+        {categories.map((c) => <li><a href={`#${c.slug}`}>{c.data.title}<small>{c.items.length || ''}</small></a></li>)}
+      </ul>
+      <a href={`/${lang}/archive/`}>{u.catalog.archiveLink}</a>
+    </aside>
+    <div>
+      {categories.map((c) => {
+        const items = c.items.filter((i) => !seen.has(i.slug)); items.forEach((i) => seen.add(i.slug));
+        return (
+          <section id={c.slug} style="padding:0 0 3.5rem;scroll-margin-top:6rem">
+            <div class="rule"><h2>{c.data.title}</h2><a class="more" href={`/${lang}/catalog/${c.slug}/`}>{u.catalog.about}</a></div>
+            {items.length > 0 && <div class="grid">{items.map((p) => <ProductCard p={p} lang={lang} glyph={c.glyph} />)}</div>}
+          </section>
+        );
+      })}
+      {other.length > 0 && (
+        <section style="padding:0 0 3.5rem">
+          <div class="rule"><h2>{u.catalog.other}</h2></div>
+          <div class="grid">{other.map((p) => <ProductCard p={p} lang={lang} />)}</div>
+        </section>
+      )}
+    </div>
+  </div>
+</Base>

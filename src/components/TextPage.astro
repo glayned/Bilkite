@@ -1,0 +1,12 @@
+---
+import Base from '../layouts/Base.astro';
+import Crumbs from './Crumbs.astro';
+import { md, excerpt, type Lang, type Entry } from '../lib/site';
+const { lang, entry, path, title, lead, trail, body } = Astro.props as { lang: Lang; entry: Entry; path: string; title?: string; lead?: string; trail?: [string, string?][]; body?: string };
+const h = title ?? entry.data.title;
+---
+<Base lang={lang} title={h} description={lead ?? excerpt(entry.body, 160)} path={path} fallback={!entry.translated}>
+  <Crumbs lang={lang} trail={trail ?? [[h]]} />
+  <div class="wrap head"><h1>{h}</h1>{lead && <p class="lead">{lead}</p>}</div>
+  <div class="wrap" style="padding-bottom:4rem"><slot name="before" /><article class="prose" set:html={md(body ?? entry.body, lang)} /><slot /></div>
+</Base>

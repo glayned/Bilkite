@@ -1,0 +1,8 @@
+---
+import { t } from '../i18n/ui';
+const { lang, trail = [] } = Astro.props as { lang: any; trail?: [string, string?][] };
+---
+<nav class="crumbs wrap" aria-label="breadcrumb">
+  <a href={`/${lang}/`}>{t(lang).crumbs.home}</a>
+  {trail.map(([label, href]) => <><span>/</span>{href ? <a href={`/${lang}${href}`}>{label}</a> : label}</>)}
+</nav>

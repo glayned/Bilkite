@@ -1,0 +1,40 @@
+---
+import Base from '../../../layouts/Base.astro';
+import Crumbs from '../../../components/Crumbs.astro';
+import { LANGS, articles, catalog, load, md, price, type Lang } from '../../../lib/site';
+import { t } from '../../../i18n/ui';
+export async function getStaticPaths() {
+  const list = await load('articles', 'bg');
+  return LANGS.flatMap((lang) => list.map((a) => ({ params: { lang, slug: a.slug } })));
+}
+const { lang, slug } = Astro.params as { lang: Lang; slug: string };
+const u = t(lang);
+const list = await articles(lang);
+const a = list.find((x) => x.slug === slug)!;
+const { products } = await catalog(lang);
+const mentioned = [...new Set([...a.body.matchAll(/\]\(\/product\/([a-z0-9-]+)\/\)/g)].map((m) => m[1]))]
+  .map((s) => products.find((p) => p.slug === s)).filter((p) => p && p.data.status === 'active').slice(0, 8);
+const more = list.filter((x) => x.slug !== slug && (a.seasons.some((s) => x.seasons.includes(s)) || (a.program && x.program))).slice(0, 6);
+const date = a.data.date ? new Date(a.data.date).toLocaleDateString(lang, { year: 'numeric', month: 'long', day: 'numeric' }) : null;
+---
+<Base lang={lang} title={a.data.title} description={a.summary} path={`/articles/${slug}/`} fallback={!a.translated} image={a.data.image}>
+  <Crumbs lang={lang} trail={[[u.articles.title, '/articles/'], [a.data.title]]} />
+  <div class="wrap head">
+    <h1>{a.data.title}</h1>
+    {date && <p class="fine">{u.updated}: <time datetime={a.data.date}>{date}</time></p>}
+  </div>
+  <div class="wrap article">
+    <article class="prose" set:html={md(a.body, lang)} />
+    <aside><div class="sticky">
+      {mentioned.length > 0 && <>
+        <h2>{u.articles.related}</h2>
+        <ul>{mentioned.map((p) => <li><a href={`/${lang}/product/${p!.slug}/`}><span>{p!.data.title}</span>{p!.data.price && <span class="price" style="font-size:.95rem">{price(p!.data.price)}</span>}</a></li>)}</ul>
+      </>}
+      {more.length > 0 && <>
+        <h2>{u.home.freshTitle}</h2>
+        <ul>{more.map((x) => <li><a href={`/${lang}/articles/${x.slug}/`}>{x.data.title}</a></li>)}</ul>
+      </>}
+      <a class="more" href={`/${lang}/articles/`}>{u.articles.back}</a>
+    </div></aside>
+  </div>
+</Base>
